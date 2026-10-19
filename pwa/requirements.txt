@@ -1,0 +1,22 @@
+# Sign Language Voice AI — PWA Backend Requirements
+# Python 3.10+ recommended
+
+# Core
+numpy>=1.26,<3
+PyYAML>=6.0.1
+torch>=2.2.0
+
+# Web server
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+websockets>=12.0
+
+# TTS (Microsoft Edge voices — requires network)
+edge-tts>=6.1.10
+
+# Optional: Local LLM (GGUF) — app runs in stub mode without this
+# See README.md for safe install instructions
+# llama-cpp-python
+
+# Optional: VOYA label download
+# huggingface_hub>=0.23.0

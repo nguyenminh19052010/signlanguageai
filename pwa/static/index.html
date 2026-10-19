@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description"
+        content="Sign Language Voice AI — Chuyển ngôn ngữ ký hiệu thành giọng nói tự nhiên bằng AI.">
+    <meta name="theme-color" content="#060a13">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Sign Language Voice AI</title>
+
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/static/icons/icon-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <p class="loading-text">Đang khởi tạo AI Engine...</p>
+            <p class="loading-sub" id="loading-status">Kết nối WebSocket...</p>
+        </div>
+    </div>
+
+    <div class="app-container">
+
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo-icon">🤟</div>
+                <div>
+                    <h1 id="app-title">Sign Language Voice AI</h1>
+                    <p class="header-subtitle" id="connection-status">Đang kết nối...</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="status-badge" id="fps-badge">
+                    <span class="badge-dot"></span>
+                    <span id="fps-text">— FPS</span>
+                </div>
+                <div class="mode-toggle">
+                    <button id="btn-mode-inference" class="btn btn-sm btn-active">Nhận diện</button>
+                    <button id="btn-mode-training" class="btn btn-sm">Thu thập & Train</button>
+                    <button id="btn-mode-v2s" class="btn btn-sm" style="background-color: var(--accent-rose); border-color: var(--accent-rose);">Voice 2 Sign</button>
+                </div>
+                <select id="lang-select" class="lang-selector">
+                    <option value="vi" selected>🇻🇳 Tiếng Việt</option>
+                    <option value="en">🇬🇧 English</option>
+                </select>
+            </div>
+        </header>
+
+        <main class="main-grid">
+
+            <section class="camera-section">
+                <div class="panel glass-panel camera-panel">
+                    <div class="camera-container" id="camera-container">
+                        <video id="video-input" autoplay playsinline muted></video>
+                        <canvas id="canvas-output"></canvas>
+                        <div class="camera-placeholder" id="camera-placeholder">
+                            <span class="placeholder-icon">📷</span>
+                            <p>Bấm <strong>Bắt đầu</strong> để mở camera</p>
+                        </div>
+                        
+                        <div class="hand-status" id="hand-status">
+                            <span class="hand-icon" id="hand-icon">✋</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel glass-panel pipeline-panel">
+                    <h3 class="panel-title">Pipeline</h3>
+                    <div class="pipeline-stages" id="pipeline-stages">
+                        <div class="pipeline-stage" data-stage="0"><span class="stage-dot"></span>Camera</div>
+                        <div class="pipeline-stage" data-stage="1"><span class="stage-dot"></span>Hand Detection</div>
+                        <div class="pipeline-stage" data-stage="2"><span class="stage-dot"></span>Gesture Recognition
+                        </div>
+                        <div class="pipeline-stage" data-stage="3"><span class="stage-dot"></span>5 Words Buffer</div>
+                        <div class="pipeline-stage" data-stage="4"><span class="stage-dot"></span>LLM Sentence</div>
+                        <div class="pipeline-stage" data-stage="5"><span class="stage-dot"></span>Speech Output</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="info-section" id="inference-section">
+
+                <div class="panel glass-panel prediction-panel">
+                    <h3 class="panel-title">Top-5 Predictions</h3>
+                    <div class="predictions-list" id="predictions-list">
+                        <div class="prediction-row" data-idx="0"><span class="pred-name">—</span>
+                            <div class="pred-bar-track">
+                                <div class="pred-bar-fill"></div>
+                            </div><span class="pred-pct">0%</span>
+                        </div>
+                        <div class="prediction-row" data-idx="1"><span class="pred-name">—</span>
+                            <div class="pred-bar-track">
+                                <div class="pred-bar-fill"></div>
+                            </div><span class="pred-pct">0%</span>
+                        </div>
+                        <div class="prediction-row" data-idx="2"><span class="pred-name">—</span>
+                            <div class="pred-bar-track">
+                                <div class="pred-bar-fill"></div>
+                            </div><span class="pred-pct">0%</span>
+                        </div>
+                        <div class="prediction-row" data-idx="3"><span class="pred-name">—</span>
+                            <div class="pred-bar-track">
+                                <div class="pred-bar-fill"></div>
+                            </div><span class="pred-pct">0%</span>
+                        </div>
+                        <div class="prediction-row" data-idx="4"><span class="pred-name">—</span>
+                            <div class="pred-bar-track">
+                                <div class="pred-bar-fill"></div>
+                            </div><span class="pred-pct">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel glass-panel words-panel">
+                    <h3 class="panel-title">5 Từ <span class="panel-badge" id="word-timer">mỗi từ ~3 giây</span></h3>
+                    <p class="collector-phase" id="collector-phase">Bấm Bắt đầu — ký từ 1/5 trong 3 giây</p>
+                    <div class="word-chips" id="word-chips">
+                        
+                    </div>
+                    <div class="word-progress-track" id="word-progress-track">
+                        <div class="word-progress-fill" id="word-progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="panel glass-panel llm-panel">
+                    <h3 class="panel-title">LLM Output</h3>
+                    <p class="llm-status" id="llm-status">LLM: idle</p>
+                    <div class="llm-output" id="llm-output">
+                        <p class="llm-placeholder">Câu sẽ xuất hiện ở đây...</p>
+                    </div>
+                    <div class="tts-row">
+                        <p class="tts-status" id="tts-status">Audio: idle</p>
+                        <div class="audio-wave" id="audio-wave">
+                            <span></span><span></span><span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-grid">
+                    <button id="btn-start" class="btn btn-primary">
+                        <span class="btn-icon">▶</span> Bắt đầu
+                    </button>
+                    <button id="btn-stop" class="btn btn-danger" disabled>
+                        <span class="btn-icon">⏹</span> Dừng
+                    </button>
+                    <button id="btn-reset" class="btn btn-secondary" disabled>
+                        <span class="btn-icon">↻</span> Reset
+                    </button>
+                    <button id="btn-force-llm" class="btn btn-accent" disabled>
+                        <span class="btn-icon">⚡</span> Ghép câu ngay
+                    </button>
+                </div>
+
+            </section>
+
+            <section class="training-section hidden" id="training-section">
+
+                <div class="panel glass-panel">
+                    <h3 class="panel-title">Quản lý Nhãn & Thu thập</h3>
+                    <div class="add-label-row">
+                        <input type="text" id="new-label-input" placeholder="Tên ký hiệu (Tiếng Việt)..."
+                            class="input-text">
+                        <button id="btn-add-label" class="btn btn-primary btn-sm">Thêm Nhãn</button>
+                    </div>
+                    <div class="labels-list-container">
+                        <table class="labels-table">
+                            <thead>
+                                <tr>
+                                    <th>Từ khóa</th>
+                                    <th>Mẫu</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="labels-tbody">
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel glass-panel">
+                    <h3 class="panel-title">Thu thập Dữ liệu</h3>
+                    <div class="collect-controls">
+                        <p class="collect-hint">Chọn 1 nhãn ở trên, sau đó bấm Record (Space) để ghi ~3-4 giây khung
+                            hình.</p>
+                        <div class="collect-status">
+                            <span id="collect-label-name">Chưa chọn nhãn</span>
+                            <span class="badge" id="collect-frames">0 / 60 frames</span>
+                        </div>
+                        <div class="word-progress-track" style="margin-bottom: 12px;">
+                            <div class="word-progress-fill" id="collect-progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <div class="action-buttons" style="display: flex; gap: 8px;">
+                            <button id="btn-record" class="btn btn-danger" disabled>
+                                <span class="btn-icon">⏺</span> Thu thập (Train)
+                            </button>
+                            <button id="btn-fewshot" class="btn btn-accent" disabled>
+                                <span class="btn-icon">🧠</span> Học nhanh (Few-Shot)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel glass-panel">
+                    <h3 class="panel-title">Huấn luyện Mô hình</h3>
+                    <button id="btn-train" class="btn btn-accent" style="width: 100%; margin-bottom: 12px;">
+                        <span class="btn-icon">⚙️</span> Train Model (50 Epochs)
+                    </button>
+                    <div class="train-console" id="train-console">
+                        > Sẵn sàng huấn luyện. Quá trình này có thể tốn vài phút tùy vào số lượng mẫu...
+                    </div>
+                </div>
+
+            </section>
+
+            <section class="v2s-section hidden" id="v2s-section">
+                <div class="panel glass-panel" style="text-align: center; padding: 40px;">
+                    <h3 class="panel-title" style="font-size: 1.5rem; margin-bottom: 20px;">🗣️ Chuyển Giọng Nói thành Ký Hiệu</h3>
+                    <div style="margin-bottom: 30px;">
+                        <button id="btn-mic-start" class="btn btn-primary" style="padding: 15px 30px; font-size: 1.1rem; border-radius: 30px;">
+                            <span class="btn-icon">🎤</span> Chạm để nói
+                        </button>
+                    </div>
+                    <div class="llm-output" style="min-height: 100px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 15px;">
+                        <p id="v2s-transcript" class="llm-placeholder" style="font-size: 1.2rem;">(Văn bản giọng nói sẽ xuất hiện ở đây...)</p>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px; border-left: 4px solid var(--accent-cyan);">
+                        <h4 style="margin: 0 0 10px 0; color: var(--accent-cyan);">🤟 Avatar 3D Render</h4>
+                        <div id="avatar-container" style="width: 100%; height: 350px; background: #000; border-radius: 8px; overflow: hidden; position: relative;">
+                            
+                            <p id="avatar-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; z-index: 10; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 20px;">Đang khởi tạo 3D Scene...</p>
+                        </div>
+                        <p id="v2s-glosses" style="font-family: monospace; color: #a1a1aa; margin-top: 15px;">Đang chờ dữ liệu...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/holistic.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1675466124/drawing_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js"
+        crossorigin="anonymous"></script>
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" crossorigin="anonymous"></script>
+
+    <script src="/static/js/hand_processor.js?v=2"></script>
+    <script src="/static/js/avatar_renderer.js?v=2"></script>
+    <script src="/static/js/app.js?v=2"></script>
+
+</body>
+
+</html>

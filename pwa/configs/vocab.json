@@ -1,0 +1,28 @@
+{
+  "classes": [
+    "ten_la",
+    "2",
+    "toi",
+    "hoc_sinh",
+    "minh",
+    "xin_chao",
+    "3",
+    "an_com"
+  ],
+  "labels_vi": {
+    "xin_chao": "xin chao",
+    "2": "2",
+    "toi": "Tôi",
+    "ten_la": "Tên là",
+    "minh": "Minh",
+    "hoc_sinh": "học sinh",
+    "3": "3",
+    "an_com": "Ăn cơm"
+  },
+  "num_classes": 7,
+  "meta": {
+    "source": "camera",
+    "dataset_root": "C:\\Users\\lenovo\\.cursor\\projects\\empty-window\\sign_language_voice_ai\\datasets\\processed",
+    "num_clips": 32
+  }
+}

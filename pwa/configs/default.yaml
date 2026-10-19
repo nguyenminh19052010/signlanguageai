@@ -1,0 +1,92 @@
+# SignLanguageVoiceAI — cấu hình thống nhất (VSL Kaggle + thu camera + runtime)
+
+project:
+  name: "SignLanguageVoiceAI"
+  log_level: "INFO"
+
+paths:
+  dataset_root: "datasets/processed"
+  gesture_checkpoint: "models/checkpoints/gesture.pt"
+  onnx_model: "models/onnx/gesture.onnx"
+  llm_gguf: "models/llm/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
+
+# VSL: chuẩn bị từ Kaggle / VOYA (tắt nếu chỉ dùng thu camera)
+vsl:
+  enabled: true
+  vocab_file: "configs/vocab.json"
+  voya_root: "datasets/raw/voya"
+  kaggle_dataset: ""
+  kaggle_raw_dir: "datasets/raw/kaggle"
+
+# Thu bộ dữ liệu từ webcam (python scripts/collect_dataset.py)
+collection:
+  min_frames: 12
+  max_frames: 120
+
+camera:
+  device_index: 0
+  backend: "auto"
+  try_indices_max: 4
+  width: 640
+  height: 480
+  target_fps: 30
+
+mediapipe:
+  mode: "hands" # Đổi lại thành "hands" vì model hiện tại (gesture.pt) được train với 126 chiều. Nếu bạn train model mới với holistic, hãy đổi thành "holistic".
+  max_num_hands: 2
+  model_complexity: 1
+  min_detection_confidence: 0.65
+  min_tracking_confidence: 0.55
+
+gesture:
+  sequence_length: 32
+  inference_stride: 3
+  confidence_threshold: 0.65
+  prediction_smoothing: 0.70
+  min_top1_margin: 0.10
+  min_accept_prob: 0.70
+  # .pt train trên VOYA (Kaggle) thường KHÔNG khớp webcam — nên train lại bằng collect_dataset
+  warn_voya_on_webcam: false
+  voya_min_top1_margin: 0.10
+  voya_min_accept_prob: 0.35
+  mixed_precision: true
+  torch_compile: false
+  allow_untrained_demo: true
+  classes: []
+
+buffer:
+  mode: sequential
+  word_capture_seconds: 1.8
+  max_words_before_llm: 5
+  min_votes_per_slot: 3
+  min_vote_ratio: 0.50
+  allow_repeat_words: false
+  pause_reset_seconds: 2.0
+
+llm:
+  # Tự dùng stub nếu chưa có file GGUF tại paths.llm_gguf
+  backend: "llama_cpp"
+  output_language: "vi"
+  n_ctx: 2048
+  n_gpu_layers: -1
+  n_batch: 256
+  n_threads: 6
+  temperature: 0.2
+  max_tokens: 160
+  stream: true
+
+tts:
+  backend: "edge_tts"
+  voice_en: "en-US-JennyNeural"
+  voice_vi: "vi-VN-HoaiMyNeural"
+  default_lang: "vi"
+  playback_queue_max: 4
+
+performance:
+  cuda_device: 0
+  frame_skip_draw: 1
+
+ui:
+  theme_dark: true
+  show_top_k: 5
+  pipeline_anim_ms: 120

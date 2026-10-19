@@ -1,0 +1,50 @@
+# Python 3.10 or 3.11 (3.10+ supported; match your PyTorch wheel)
+# Install PyTorch with CUDA from https://pytorch.org — match your CUDA toolkit.
+#
+# Before pip install -r requirements.txt run:
+#   python -m pip install --upgrade pip setuptools wheel
+#
+# PyQt6-QtMultimedia is OPTIONAL (pip sometimes returns "versions: none" on old pip
+# or strict mirrors). GUI works with PyQt6 only; audio uses pygame (MP3) fallback.
+
+numpy>=1.26,<3
+opencv-python>=4.9.0.80
+# Legacy Hands API: newer 0.11+ có thể khác layout — ghim bản ổn định cho Windows
+mediapipe>=0.10.9,<0.11
+PyYAML>=6.0.1
+
+PyQt6>=6.5.0,<7
+pygame>=2.5.0
+
+# OPTIONAL — same version number as PyQt6 if you want native Qt audio backend:
+#   pip install "PyQt6-QtMultimedia==6.6.1"
+# (Match your installed PyQt6, e.g. 6.11.0 → PyQt6-QtMultimedia==6.11.0)
+
+# Gesture model training / inference
+torch>=2.2.0
+
+# Local LLM — KHÔNG đưa vào pip mặc định: trên Windows pip hay cố BUILD từ source
+# và cần MSVC / CUDA. App vẫn chạy không có gói này (LLM stub).
+# Cách cài an toàn: xem docs/LLM_SETUP_WINDOWS.md
+#   python -m pip install --upgrade pip
+#   pip install llama-cpp-python --prefer-binary
+# Hoặc cài wheel .whl từ GitHub release cho đúng Python/cp310/win_amd64.
+
+# TTS (Microsoft Edge voices — requires network for synthesis)
+edge-tts>=6.1.10
+
+# Optional: ONNX export / runtime (TensorRT EP is environment-specific)
+onnx>=1.16.0
+onnxruntime-gpu>=1.17.0
+
+# Optional GPU stats (falls back to nvidia-smi CLI)
+pynvml>=11.5.0
+
+# VSL dataset download (VOYA)
+huggingface_hub>=0.23.0
+# kaggle>=1.6.0   # chỉ khi tải dataset Kaggle
+
+# Optional advanced module
+# faster-whisper>=1.0.0
+
+onnxruntime
